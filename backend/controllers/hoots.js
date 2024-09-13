@@ -1,17 +1,40 @@
-const express = require('express');
-const checkToken = require('../middleware/checkToken.js');
 const Hoot = require('../models/hoot.js');
-const router = express.Router();
+const checkToken = require('../middleware/checkToken.js');
 
-// ========== Public Routes ===========
+module.exports = {
+    index,
+    show, 
+    create,
+    update,
+    hootsDelete,
+}
 
-// ========= Protected Routes =========
-
-
-//PoST
-router.post('/', async (req, res) => {
+// INDEX FUNCTIONALITY 
+ async function index(req, res) {
     try {
-        console.log(req.body)
+      const hoots = await Hoot.find({})
+        .populate('author')
+        .sort({ createdAt: 'desc' });
+      res.status(200).json(hoots);
+    } catch (error) {
+      res.status(500).json(error);
+    }
+  };
+
+// SHOW FUNCTIONALITY 
+async function show(req, res) {
+    try {
+      const hoot = await Hoot.findById(req.params.hootId).populate('author');
+      res.status(200).json(hoot);
+    } catch (error) {
+      res.status(500).json(error);
+    }
+  };
+
+// CREATE FUNCTIONALITY 
+ async function create(req, res) {
+    console.log(req.user);
+    try {
       req.body.author = req.user._id;
       const hoot = await Hoot.create(req.body);
       hoot._doc.author = req.user;
@@ -20,8 +43,48 @@ router.post('/', async (req, res) => {
       console.log(error);
       res.status(500).json(error);
     }
-  });
+  };
 
-router.use(checkToken);
+// UPDATE FUNCTIONALITY
+async function update(req, res) {
+    try {
+      // Find the hoot:
+      const hoot = await Hoot.findById(req.params.hootId);
+  
+      // Check permissions:
+      if (!hoot.author.equals(req.user._id)) {
+        return res.status(403).send("You're not allowed to do that!");
+      }
+  
+      // Update hoot:
+      const updatedHoot = await Hoot.findByIdAndUpdate(
+        req.params.hootId,
+        req.body,
+        { new: true }
+      );
+  
+      // Append req.user to the author property:
+      updatedHoot._doc.author = req.user;
+  
+      // Issue JSON response:
+      res.status(200).json(updatedHoot);
+    } catch (error) {
+      res.status(500).json(error);
+    }
+  };
 
-module.exports = router;
+// DELETE FUNCTIONALITY
+ async function hootsDelete(req, res) {
+    try {
+      const hoot = await Hoot.findById(req.params.hootId);
+  
+      if (!hoot.author.equals(req.user._id)) {
+        return res.status(403).send("You're not allowed to do that!");
+      }
+  
+      const deletedHoot = await Hoot.findByIdAndDelete(req.params.hootId);
+      res.status(200).json(deletedHoot);
+    } catch (error) {
+      res.status(500).json(error);
+    }
+  };

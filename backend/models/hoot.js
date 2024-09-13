@@ -1,5 +1,7 @@
+// models/hoot.js
 const mongoose = require('mongoose');
 
+// embedded comment schema:
 const commentSchema = new mongoose.Schema(
     {
       text: {
@@ -11,6 +13,7 @@ const commentSchema = new mongoose.Schema(
     { timestamps: true }
   );
 
+//HOOT MODULE: 
 const hootSchema = new mongoose.Schema(
     {
       title: {
@@ -27,11 +30,12 @@ const hootSchema = new mongoose.Schema(
         enum: ['News', 'Sports', 'Games', 'Movies', 'Music', 'Television'],
       },
       author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-      comments: [commentSchema]
+      comments: [commentSchema],
     },
     { timestamps: true }
   );
-
   
   const Hoot = mongoose.model('Hoot', hootSchema);
+
+
   module.exports = Hoot;
